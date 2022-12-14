@@ -1,10 +1,31 @@
 /*
  Interface to Shinyei Model PPD42NS Particle Sensor
- Program by Christopher Nafis 
- Written April 2012
- 
+ Written December 2022
+
+ Model GP2Y1010AU0F/ GP2Y1014AU0F/ DSM501A:
+
+ Model PPD42NS:
+  Operating Temperature Range: 0~45°C
+  Operating Humidity Range 95%rh or less (without dew condensation)
+  Detectable particle size approx. 1μm (minimum.)
+  Supply Voltage DC5V +/- 10% (CN1:Pin1=GND, Pin3=+5V)
+    Ripple Voltage within 30mV
+  Power consumption 90mA
+  Time for stabilization 1 minute after power turned on
+  Output Method Negative Logic, Digital output
+    Hi : over 4.0V(Rev.2) Lo : under 0.7V
+    (As Input impedance : 200kΩ) OP-Amp output, Pull-up resistor : 10kΩ
+  
+  CN : S5B-EH(JST)
+    1* : COMMON(GND)
+    2  : OUTPUT(P2)
+    3* : INPUT(5VDC 90mA)
+    4* : OUTPUT(P1)
+    5  : INPUT(T1)･･･FOR THRESHOLD FOR [P2]
+
  http://www.seeedstudio.com/depot/grove-dust-sensor-p-1050.html
- http://www.sca-shinyei.com/pdf/PPD42NS.pdf
+ https://wiki.seeedstudio.com/Grove-Dust_Sensor/#jump
+ https://files.seeedstudio.com/wiki/Grove_Dust_Sensor/resource/Grove_-_Dust_sensor.pdf
  
  JST Pin 1 (Black Wire)  => Arduino GND
  JST Pin 3 (Red wire)    => Arduino 5VDC
@@ -12,7 +33,6 @@
  
  Modifier par Eric HANACEK
  le 11/01/2015
- adapter avec SD Card Shield v4.0
  pin A5 en input digital
  
  */
@@ -55,7 +75,8 @@
 //Placer les #define avant <Mysensors.h>
 #include <MySensors.h>
 
-#define CHILD_ID_DUST 0  // sensor number needed in the custom devices set up
+// Detecting the particle diameter μm
+#define CHILD_ID_DUST_PM10 0
 
 // Wait times
 #define LONG_WAIT 500
@@ -68,19 +89,23 @@
 // // make a string for assembling the data to log:
 // String dataString = "";
 
-int pin = A5; // adapter avec SD Card Shield v4.0
+//#define DUST_SENSOR_DIGITAL_PIN A5; // adapter avec SD Card Shield v4.0
+int DUST_SENSOR_DIGITAL_PIN = A5;
+
 unsigned long duration;
 unsigned long lowpulseoccupancy = 0;
 unsigned long starttime;
 unsigned long sampletime_ms = 30000;
+float valDUST = 0.0;
+float lastDUST = 0.0;
 float ratio = 0;
-float lastconcentration = 0;
+long lastconcentration = 0;
 
 //float DateMesure;
 
 // initate and re-use to save memory.
-MyMessage msgDUST(CHILD_ID_DUST, V_LEVEL);
-//MyMessage msgUNIT(CHILD_ID_DUST, V_UNIT_PREFIX);
+MyMessage msgDUST(CHILD_ID_DUST_PM10, V_LEVEL);
+MyMessage msgUNIT(CHILD_ID_DUST_PM10, V_UNIT_PREFIX);
 
 void before()
 {
@@ -107,8 +132,12 @@ void presentation()
   strcat(sChild, sNoeud);
   strcat(sChild, " DUST");
   Serial.println(sChild);
-  present(CHILD_ID_DUST, S_DUST, sChild); 
-  wait(LONG_WAIT);  
+  present(CHILD_ID_DUST_PM10, S_DUST, sChild); 
+  wait(LONG_WAIT); 
+  // Unite 'pcs/litre'
+  //send(msgUNIT.set("ppm"));
+  send(msgUNIT.set("pcs/litre"));
+  wait(LONG_WAIT);
 
 }
 
@@ -118,8 +147,8 @@ void setup()
   //digitalWrite(13, LOW); //Eteindre la LED
   
   // Serial.begin(9600);
-  // Serial.println("Demarrage detecteur");
-  // pinMode(pin,INPUT);
+  Serial.println("Demarrage detecteur");
+  pinMode(DUST_SENSOR_DIGITAL_PIN,INPUT);
 
   // adapter avec SD Card Shield v4.0
   //digitalWrite(A5, HIGH);  // set pullup on analog pin 5 
@@ -136,7 +165,7 @@ void setup()
   EcrireLigneSD("lowpulse (micro S);ratio (%);concentration ( particules / 0.01 cubic feet (0.28316846592 litre)");
   */
 
-  // starttime = millis();
+  starttime = millis();
 
 }
 
@@ -148,19 +177,19 @@ void loop()
     //send(msgPrefix.set("custom_lux"));  // Set custom unit.
     Serial.println("======> Sending initial value");
     //La couleur
-    Serial.println("Color Message");
-    //send(msgRGB.set( "00FF00" ));
-    send(msgDUST.set( 0 ));
+    Serial.println("DUST Message");
+    //send(msgDUST.set( 0 ));
+    send(msgDUST.set((int32_t)ceil(lastconcentration)));
     wait(LONG_WAIT2); //to check: is it needed
 
     first_message_sent = true;
   }
 
-  duration = pulseIn(pin, LOW);
+  duration = pulseIn(DUST_SENSOR_DIGITAL_PIN, LOW);
   lowpulseoccupancy = lowpulseoccupancy + duration; //en micro secondes temps à zéro
-
   if ((millis()-starttime) > sampletime_ms)
   {
+    //get density of particles
     ratio = lowpulseoccupancy / (sampletime_ms * 10.0);  // Integer percentage 0=>100
     //pied cube 
     // 1 ft3 = 28.316846592 l
@@ -169,13 +198,16 @@ void loop()
     //
     // 0.01 ft3 = 0.28316846592 l (~=  283 ml  1/5 ml)
     float concentration = 1.1 * pow(ratio,3) - 3.8 * pow(ratio,2) + 520 * ratio + 0.62; // using spec sheet curve
+    #ifdef DEBUG
+      Serial.print("Concentration: ");
+      Serial.println(concentration);
+    #endif
     
     if (lastconcentration != concentration )
     {
       lastconcentration = concentration;
-
-
-      
+      send(msgDUST.set((int32_t)ceil(lastconcentration)));
+            
     }
   //   //DateMesure=millis()/1000; 
   //   //dataString=DateMesure;
