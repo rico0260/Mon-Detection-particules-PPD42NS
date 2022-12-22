@@ -1,40 +1,41 @@
-/*
- Interface to Shinyei Model PPD42NS Particle Sensor
- Written December 2022
-
- Model GP2Y1010AU0F/ GP2Y1014AU0F/ DSM501A:
-
- Model PPD42NS:
-  Operating Temperature Range: 0~45°C
-  Operating Humidity Range 95%rh or less (without dew condensation)
-  Detectable particle size approx. 1μm (minimum.)
-  Supply Voltage DC5V +/- 10% (CN1:Pin1=GND, Pin3=+5V)
-    Ripple Voltage within 30mV
-  Power consumption 90mA
-  Time for stabilization 1 minute after power turned on
-  Output Method Negative Logic, Digital output
-    Hi : over 4.0V(Rev.2) Lo : under 0.7V
-    (As Input impedance : 200kΩ) OP-Amp output, Pull-up resistor : 10kΩ
-  
-  CN : S5B-EH(JST)
-    1* : COMMON(GND)
-    2  : OUTPUT(P2)
-    3* : INPUT(5VDC 90mA)
-    4* : OUTPUT(P1)
-    5  : INPUT(T1)･･･FOR THRESHOLD FOR [P2]
-
- http://www.seeedstudio.com/depot/grove-dust-sensor-p-1050.html
- https://wiki.seeedstudio.com/Grove-Dust_Sensor/#jump
- https://files.seeedstudio.com/wiki/Grove_Dust_Sensor/resource/Grove_-_Dust_sensor.pdf
- 
- JST Pin 1 (Black Wire)  => Arduino GND
- JST Pin 3 (Red wire)    => Arduino 5VDC
- JST Pin 4 (Yellow wire) => Arduino Digital Pin 8
- 
- Modifier par Eric HANACEK
- le 11/01/2015
- pin A5 en input digital
- 
+/**************************************
+ * 
+ * Interface to Shinyei Model PPD42NS Particle Sensor
+ * Written December 2022
+ * 
+ * Model GP2Y1010AU0F/ GP2Y1014AU0F/ DSM501A:
+ * 
+ * Model PPD42NS:
+ *  Operating Temperature Range: 0~45°C
+ *  Operating Humidity Range 95%rh or less (without dew condensation)
+ *  Detectable particle size approx. 1μm (minimum.)
+ *  Supply Voltage DC5V +/- 10% (CN1:Pin1=GND, Pin3=+5V)
+ *  Ripple Voltage within 30mV
+ *  Power consumption 90mA
+ *  Time for stabilization 1 minute after power turned on
+ * Output Method Negative Logic, Digital output
+ *  Hi : over 4.0V(Rev.2) Lo : under 0.7V
+ *  (As Input impedance : 200kΩ) OP-Amp output, Pull-up resistor : 10kΩ
+ * 
+ * CN : S5B-EH(JST)
+ * 1* : COMMON(GND)
+ * 2  : OUTPUT(P2)
+ * 3* : INPUT(5VDC 90mA)
+ * 4* : OUTPUT(P1)
+ * 5  : INPUT(T1)･･･FOR THRESHOLD FOR [P2]* 
+ * 
+ * http://www.seeedstudio.com/depot/grove-dust-sensor-p-1050.html
+ * https://wiki.seeedstudio.com/Grove-Dust_Sensor/#jump
+ * https://files.seeedstudio.com/wiki/Grove_Dust_Sensor/resource/Grove_-_Dust_sensor.pdf
+ * 
+ * JST Pin 1 (Black Wire)  => Arduino GND
+ * JST Pin 3 (Red wire)    => Arduino 5VDC
+ * JST Pin 4 (Yellow wire) => Arduino Digital Pin 8
+ * 
+ *  Modifier par Eric HANACEK
+ *  le 11/01/2015
+ *  pin A5 en input digital
+ *  
  */
 #include <Arduino.h>
 
@@ -51,7 +52,7 @@
 //#define MY_RADIO_RFM95
 
 // Enable repeater functionality for this node
-#define MY_REPEATER_FEATURE
+//#define MY_REPEATER_FEATURE
 
 //Options: RF24_PA_MIN, RF24_PA_LOW, (RF24_PA_HIGH), RF24_PA_MAX
 //#define MY_RF24_PA_LEVEL RF24_PA_MAX
@@ -59,13 +60,11 @@
 //#define MY_OTA_FIRMWARE_FEATURE
 
 //uncomment this line to assign a static ID
-//#define MY_NODE_ID AUTO 
-#define MY_NODE_ID 150
+//#define MY_NODE_ID 1 
 
 //MY_RF24_CHANNEL par defaut 76
 //Channels: 1 to 126 - 76 = Channel 77
-//MY_RF24_CHANNEL (76)
-#define MY_RF24_CHANNEL 81
+//#define MY_RF24_CHANNEL (76)
 
 //Define this to use the IRQ pin of the RF24 module
 //#define MY_RF24_IRQ_PIN (2) 
